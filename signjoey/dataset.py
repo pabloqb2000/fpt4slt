@@ -7,13 +7,69 @@ from torchtext.data import Field, RawField
 from typing import List, Tuple
 import pickle
 import gzip
+import json
 import torch
-
+from torch import Tensor
+import numpy as np
+from tqdm import tqdm
 
 def load_dataset_file(filename):
     with gzip.open(filename, "rb") as f:
         loaded_object = pickle.load(f)
         return loaded_object
+
+def load_json(filename):
+    with open(filename, "r") as f:
+        return json.load(f)
+
+class ProbTranslationDataset(data.Dataset):
+    """Defines a dataset for machine translation."""
+
+    @staticmethod
+    def sort_key(ex):
+        return data.interleave_keys(len(ex.sgn), len(ex.txt))
+
+    def __init__(
+        self,
+        path: str,
+        fields: Tuple[RawField, RawField, Field, Field, Field],
+        keep_only=None,
+        **kwargs
+    ):
+        print(f"loading {path}")
+        if not isinstance(fields[0], (tuple, list)):
+            fields = [
+                ("sequence", fields[0]),
+                ("signer", fields[1]),
+                ("sgn", fields[2]),
+                ("gls", fields[3]),
+                ("txt", fields[4]),
+            ]
+
+        if not isinstance(path, list):
+            path = [path]
+
+        examples = []
+        for annotation_file in path:
+            annotations = load_json(annotation_file)
+            glosses = annotations["glosses"]
+            texts = annotations["translations"]
+            logits = np.load("./data/probs/" + annotations["sequence_logits"].split("/")[-1])
+            for i in range(len(glosses)):
+                examples.append(
+                    data.Example.fromlist(
+                        [
+                            f"sign_prob_{i}",
+                            "unk",
+                            Tensor(logits[0,:,:]).float(),
+                            glosses[i].strip(),
+                            texts[i].strip(),
+                        ],
+                        fields,
+                    )
+                )
+                # logits = np.delete(logits, 0, axis=0)
+        super().__init__(examples, fields, **kwargs)
 
 
 class SignTranslationDataset(data.Dataset):
@@ -94,4 +150,5 @@ class SignTranslationDataset(data.Dataset):
                     fields,
                 )
             )
+            print(sample["gloss"].strip(), sample["text"].strip())
         super().__init__(examples, fields, **kwargs)

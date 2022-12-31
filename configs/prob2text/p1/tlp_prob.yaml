@@ -1,14 +1,14 @@
 name: phoenix14t
 data:
-    data_path: ./data/signs/
+    data_path: ./data/probs/
     version: phoenix_2014_trans
     sgn: sign
     txt: text
     gls: gloss
-    train: phoenix14t.pami0.train
-    dev: phoenix14t.pami0.dev
-    test: phoenix14t.pami0.test
-    feature_size: 1024
+    train: tlp_output_train.json
+    dev: tlp_output_dev.json
+    test: tlp_output_test.json
+    feature_size: 1116
     level: word
     txt_lowercase: true
     max_sent_length: 400
@@ -49,8 +49,8 @@ training:
     reset_best_ckpt: false
     reset_scheduler: false
     reset_optimizer: false
-    random_seed: 7366756
-    model_dir: "/project/slt/logs/information_p14t_only/sign2text/phoenix14t/7366756"
+    random_seed: 19
+    model_dir: "./project/slt/logs/prob2text/19"
     recognition_loss_weight: 0.0
     translation_loss_weight: 1.0
     eval_metric: bleu
@@ -83,7 +83,7 @@ training:
     decrease_factor: 0.7
     label_smoothing: 0.0
 model:
-    type: sign
+    type: prob
     initializer: xavier
     bias_initializer: zeros
     init_gain: 1.0
@@ -92,8 +92,8 @@ model:
     tied_softmax: false
     encoder:
         type: transformer
-        num_layers: 3
-        num_heads: 8
+        num_layers: 1
+        num_heads: 4
         embeddings:
             embedding_dim: 512
             scale: false
@@ -101,12 +101,12 @@ model:
             norm_type: batch
             activation_type: softsign
         hidden_size: 512
-        ff_size: 2048
+        ff_size: 1024
         dropout: 0.1
     decoder:
         type: transformer
-        num_layers: 3
-        num_heads: 8
+        num_layers: 1
+        num_heads: 4
         embeddings:
             embedding_dim: 512
             scale: false
@@ -114,5 +114,5 @@ model:
             norm_type: batch
             activation_type: softsign
         hidden_size: 512
-        ff_size: 2048
+        ff_size: 1024
         dropout: 0.1

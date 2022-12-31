@@ -354,6 +354,183 @@ class SignModel(nn.Module):
         )
 
 
+class ProbModel(nn.Module):
+    """
+    Predict from TLP probabilities
+    """
+    def __init__(
+            self,
+            encoder: Encoder,
+            decoder: Decoder,
+            prob_embed: SpatialEmbeddings,
+            txt_embed: Embeddings,
+            txt_vocab: TextVocabulary,
+    ):
+        super().__init__()
+
+        self.encoder = encoder
+        self.decoder = decoder
+
+        self.prob_embed = prob_embed
+        self.txt_embed = txt_embed
+
+        self.txt_vocab = txt_vocab
+
+        self.txt_bos_index = self.txt_vocab.stoi[BOS_TOKEN]
+        self.txt_pad_index = self.txt_vocab.stoi[PAD_TOKEN]
+        self.txt_eos_index = self.txt_vocab.stoi[EOS_TOKEN]
+
+        print('Special tokens:')
+        print(f'BOS = {self.txt_bos_index}')
+        print(f'PAD = {self.txt_pad_index}')
+        print(f'EOS = {self.txt_eos_index}')
+
+    # pylint: disable=arguments-differ
+    def forward(
+            self,
+            prob: Tensor,
+            prob_mask: Tensor,
+            prob_lengths: Tensor,
+            txt_input: Tensor,
+            txt_mask: Tensor = None,
+    ) -> (Tensor, Tensor, Tensor, Tensor):
+        encoder_output, encoder_hidden = self.encode(
+            prob=prob, prob_mask=prob_mask, prob_length=prob_lengths
+        )
+        
+        unroll_steps = txt_input.size(1)
+        decoder_outputs = self.decode(
+            encoder_output=encoder_output,
+            encoder_hidden=encoder_hidden,
+            prob_mask=prob_mask,
+            txt_input=txt_input,
+            unroll_steps=unroll_steps,
+            txt_mask=txt_mask,
+        )
+
+        return decoder_outputs
+
+    def encode(
+            self, prob: Tensor, prob_mask: Tensor, prob_length: Tensor
+    ) -> (Tensor, Tensor):
+        return self.encoder(
+            embed_src=self.prob_embed(x=prob, mask=prob_mask),
+            src_length=prob_length,
+            mask=prob_mask,
+        )
+
+    def decode(
+            self,
+            encoder_output: Tensor,
+            encoder_hidden: Tensor,
+            prob_mask: Tensor,
+            txt_input: Tensor,
+            unroll_steps: int,
+            decoder_hidden: Tensor = None,
+            txt_mask: Tensor = None,
+    ) -> (Tensor, Tensor, Tensor, Tensor):
+        return self.decoder(
+            encoder_output=encoder_output,
+            encoder_hidden=encoder_hidden,
+            src_mask=prob_mask,
+            trg_embed=self.txt_embed(x=txt_input, mask=txt_mask),
+            trg_mask=txt_mask,
+            unroll_steps=unroll_steps,
+            hidden=decoder_hidden,
+        )
+
+    def get_loss_for_batch(
+            self,
+            batch: Batch,
+            recognition_loss_function: nn.Module,
+            translation_loss_function: nn.Module,
+            recognition_loss_weight: float,
+            translation_loss_weight: float,
+    ) -> (Tensor, Tensor):
+        # Do a forward pass
+        # TODO (polqb): Get propper batches  
+        decoder_outputs = self.forward(
+            prob=batch.sgn,
+            prob_mask=batch.sgn_mask,
+            prob_lengths=batch.sgn_lengths,
+            txt_input=batch.txt_input,
+            txt_mask=batch.txt_mask,
+        )
+        word_outputs, _, _, _ = decoder_outputs
+        # Calculate Translation Loss
+        txt_log_probs = F.log_softmax(word_outputs, dim=-1)
+        translation_loss = (
+            translation_loss_function(txt_log_probs, batch.txt)
+            * translation_loss_weight
+        )
+
+        return None, translation_loss
+
+    def run_batch(
+            self,
+            batch: Batch,
+            recognition_beam_size: int = 1,
+            translation_beam_size: int = 1,
+            translation_beam_alpha: float = -1,
+            translation_max_output_length: int = 100,
+    ) -> (np.array, np.array, np.array):
+        # TODO (polqb): Get propper batches 
+        encoder_output, encoder_hidden = self.encode(
+            prob=batch.sgn, prob_mask=batch.sgn_mask, prob_length=batch.sgn_lengths
+        )
+
+        # greedy decoding
+        if translation_beam_size < 2:
+            stacked_txt_output, stacked_attention_scores = greedy(
+                encoder_hidden=encoder_hidden,
+                encoder_output=encoder_output,
+                src_mask=batch.sgn_mask,
+                embed=self.txt_embed,
+                bos_index=self.txt_bos_index,
+                eos_index=self.txt_eos_index,
+                decoder=self.decoder,
+                max_output_length=translation_max_output_length,
+            )
+        else:  # beam size
+            stacked_txt_output, stacked_attention_scores = beam_search(
+                size=translation_beam_size,
+                encoder_hidden=encoder_hidden,
+                encoder_output=encoder_output,
+                src_mask=batch.sgn_mask,
+                embed=self.txt_embed,
+                max_output_length=translation_max_output_length,
+                alpha=translation_beam_alpha,
+                eos_index=self.txt_eos_index,
+                pad_index=self.txt_pad_index,
+                bos_index=self.txt_bos_index,
+                decoder=self.decoder,
+                )
+        
+        return None, stacked_txt_output, stacked_attention_scores
+
+    def __repr__(self) -> str:
+        """
+        String representation: a description of encoder, decoder and embeddings
+
+        :return: string representation
+        """
+        return (
+                "%s(\n"
+                "\tencoder=%s,\n"
+                "\tdecoder=%s,\n"
+                "\tprob_embed=%s,\n"
+                "\ttxt_embed=%s)"
+                % (
+                    self.__class__.__name__,
+                    self.encoder,
+                    self.decoder,
+                    self.prob_embed,
+                    self.txt_embed,
+                )
+        )
+
+
+
 def build_model(
         cfg: dict,
         sgn_dim: int,
@@ -361,7 +538,7 @@ def build_model(
         txt_vocab: TextVocabulary,
         do_recognition: bool = True,
         do_translation: bool = True,
-) -> SignModel:
+) -> nn.Module:
     """
     Build and initialize the model according to the configuration.
 
@@ -459,17 +636,28 @@ def build_model(
         txt_embed = None
         decoder = None
 
-    model: SignModel = SignModel(
-        encoder=encoder,
-        gloss_output_layer=gloss_output_layer,
-        decoder=decoder,
-        sgn_embed=sgn_embed,
-        txt_embed=txt_embed,
-        gls_vocab=gls_vocab,
-        txt_vocab=txt_vocab,
-        do_recognition=do_recognition,
-        do_translation=do_translation,
-    )
+    if cfg.get("type", "sign") == "sign":
+        model: SignModel = SignModel(
+            encoder=encoder,
+            gloss_output_layer=gloss_output_layer,
+            decoder=decoder,
+            sgn_embed=sgn_embed,
+            txt_embed=txt_embed,
+            gls_vocab=gls_vocab,
+            txt_vocab=txt_vocab,
+            do_recognition=do_recognition,
+            do_translation=do_translation,
+        )
+    else: 
+        print(" --------> Yeah, using super prob model!!!")        
+        model: ProbModel = ProbModel(
+            encoder=encoder,
+            decoder=decoder,
+            prob_embed=sgn_embed,
+            txt_embed=txt_embed,
+            txt_vocab=txt_vocab,
+        )
+
 
     if do_translation:
         # tie softmax layer with txt embeddings

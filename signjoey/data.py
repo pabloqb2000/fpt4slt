@@ -13,7 +13,7 @@ from torchtext.data import Dataset, Iterator
 import socket
 
 from signjoey import data_preprocessing
-from signjoey.dataset import SignTranslationDataset
+from signjoey.dataset import SignTranslationDataset, ProbTranslationDataset
 from signjoey.vocabulary import (
     build_vocab,
     Vocabulary,
@@ -24,7 +24,7 @@ from signjoey.vocabulary import (
 )
 
 
-def load_data(data_cfg: dict, keep_only = None) -> (Dataset, Dataset, Dataset, Vocabulary, Vocabulary):
+def load_data(data_cfg: dict, data_type = "sign", keep_only = None) -> (Dataset, Dataset, Dataset, Vocabulary, Vocabulary):
     """
     Load train, dev and optionally test data as specified in configuration.
     Vocabularies are created from the training set with a limit of `voc_limit`
@@ -150,14 +150,22 @@ def load_data(data_cfg: dict, keep_only = None) -> (Dataset, Dataset, Dataset, V
         include_lengths=True,
     )
 
-    train_data = SignTranslationDataset(
-        path=train_paths,
-        fields=(sequence_field, signer_field, sgn_field, gls_field, txt_field),
-        filter_pred=lambda x: len(vars(x)["sgn"]) <= max_sent_length
-                              and len(vars(x)["txt"]) <= max_sent_length,
-        keep_only=keep_only['train']
-    )
-
+    if data_type == "sign":
+        train_data = SignTranslationDataset(
+            path=train_paths,
+            fields=(sequence_field, signer_field, sgn_field, gls_field, txt_field),
+            filter_pred=lambda x: len(vars(x)["sgn"]) <= max_sent_length
+                                and len(vars(x)["txt"]) <= max_sent_length,
+            keep_only=keep_only['train']
+        )
+    else:
+        train_data = ProbTranslationDataset(
+            path=train_paths,
+            fields=(sequence_field, signer_field, sgn_field, gls_field, txt_field),
+            filter_pred=lambda x: len(vars(x)["sgn"]) <= max_sent_length
+                                and len(vars(x)["txt"]) <= max_sent_length,
+            keep_only=keep_only['train']
+        )
     gls_max_size = data_cfg.get("gls_voc_limit", sys.maxsize)
     gls_min_freq = data_cfg.get("gls_voc_min_freq", 1)
     txt_max_size = data_cfg.get("txt_voc_limit", sys.maxsize)
@@ -195,12 +203,19 @@ def load_data(data_cfg: dict, keep_only = None) -> (Dataset, Dataset, Dataset, V
         keep, _ = train_data.split(split_ratio=[learning_curve_percentage, 1 - learning_curve_percentage],
                                    random_state=random.getstate())
         train_data = keep
-
-    dev_data = SignTranslationDataset(
-        path=dev_paths,
-        fields=(sequence_field, signer_field, sgn_field, gls_field, txt_field_pred),
-        keep_only=keep_only['dev']
-    )
+        
+    if data_type == "sign":
+        dev_data = SignTranslationDataset(
+            path=dev_paths,
+            fields=(sequence_field, signer_field, sgn_field, gls_field, txt_field_pred),
+            keep_only=keep_only['dev']
+        )
+    else:
+        dev_data = ProbTranslationDataset(
+            path=dev_paths,
+            fields=(sequence_field, signer_field, sgn_field, gls_field, txt_field_pred),
+            keep_only=keep_only['dev']
+        )
     random_dev_subset = data_cfg.get("random_dev_subset", -1)
     if random_dev_subset > -1:
         # select this many development examples randomly and discard the rest
@@ -211,11 +226,18 @@ def load_data(data_cfg: dict, keep_only = None) -> (Dataset, Dataset, Dataset, V
         dev_data = keep
 
     # check if target exists
-    test_data = SignTranslationDataset(
-        path=test_paths,
-        fields=(sequence_field, signer_field, sgn_field, gls_field, txt_field_pred),
-        keep_only=keep_only['test']
-    )
+    if data_type == "sign":
+        test_data = SignTranslationDataset(
+            path=test_paths,
+            fields=(sequence_field, signer_field, sgn_field, gls_field, txt_field_pred),
+            keep_only=keep_only['test']
+        )
+    else:
+        test_data = ProbTranslationDataset(
+            path=test_paths,
+            fields=(sequence_field, signer_field, sgn_field, gls_field, txt_field_pred),
+            keep_only=keep_only['test']
+        )
 
     gls_field.vocab = gls_vocab
     txt_field.vocab = txt_vocab

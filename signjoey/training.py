@@ -9,6 +9,7 @@ import os
 import shutil
 import time
 import queue
+from tqdm import tqdm
 
 from signjoey.model import build_model
 from signjoey.batch import Batch
@@ -31,6 +32,7 @@ from signjoey.prediction import test
 from signjoey.metrics import wer_single
 from signjoey.vocabulary import SIL_TOKEN
 from torch import Tensor
+import torch.nn as nn
 from torch.utils.tensorboard import SummaryWriter
 from torchtext.data import Dataset
 from typing import List, Dict
@@ -41,7 +43,7 @@ class TrainManager:
     """ Manages training loop, validations, learning rate scheduling
     and early stopping."""
 
-    def __init__(self, model: SignModel, config: dict) -> None:
+    def __init__(self, model: nn.Module, config: dict, type: str) -> None:
         """
         Creates a new TrainManager for a model, specified as in configuration.
 
@@ -49,6 +51,7 @@ class TrainManager:
         :param config: dictionary containing the training configurations
         """
         train_config = config["training"]
+        self.type = type
 
         # files for logging and storing
         self.model_dir = make_model_dir(
@@ -346,6 +349,7 @@ class TrainManager:
         :param train_data: training data
         :param valid_data: validation data
         """
+        print("Starting training")
         train_iter = make_data_iter(
             train_data,
             batch_size=self.batch_size,
@@ -372,7 +376,7 @@ class TrainManager:
                 processed_txt_tokens = self.total_txt_tokens
                 epoch_translation_loss = 0
 
-            for batch in iter(train_iter):
+            for batch in tqdm(iter(train_iter)):
                 # reactivate training
                 # create a Batch object from torchtext batch
                 batch = Batch(
@@ -965,7 +969,7 @@ class TrainManager:
                 opened_file.write("{}|{}\n".format(seq, hyp))
 
 
-def train(cfg_file: str) -> None:
+def train(cfg_file: str, type: str) -> None:
     """
     Main training function. After training, also test on test data if given.
 
@@ -976,11 +980,13 @@ def train(cfg_file: str) -> None:
     # set the random seed
     set_seed(seed=cfg["training"].get("random_seed", 42))
 
+    print("Loading data...")
     train_data, dev_data, test_data, gls_vocab, txt_vocab = load_data(
-        data_cfg=cfg["data"]
+        data_cfg=cfg["data"], data_type=type
     )
 
     # build model and load parameters into it
+    print("Building model")
     do_recognition = cfg["training"].get("recognition_loss_weight", 1.0) > 0.0
     do_translation = cfg["training"].get("translation_loss_weight", 1.0) > 0.0
     model = build_model(
@@ -993,9 +999,14 @@ def train(cfg_file: str) -> None:
         do_recognition=do_recognition,
         do_translation=do_translation,
     )
+    print()
+    print()
+    print(model)
+    print()
+    print()
 
     # for training management, e.g. early stopping and model selection
-    trainer = TrainManager(model=model, config=cfg)
+    trainer = TrainManager(model=model, config=cfg, type=type)
 
     # store copy of original training config in model dir
     shutil.copy2(cfg_file, trainer.model_dir + "/config.yaml")

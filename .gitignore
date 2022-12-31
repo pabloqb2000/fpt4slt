@@ -4,3 +4,9 @@ sign_sample_model
 gpulab.key
 gpulab.key.pub
 *.pyc
+.ipynb_checkpoints/
+.vscode/
+data/
+mytest.py
+load_data_ckeck.ipynb
+project/
