@@ -636,7 +636,7 @@ def build_model(
         txt_embed = None
         decoder = None
 
-    if cfg.get("type", "sign") == "sign":
+    if True:
         model: SignModel = SignModel(
             encoder=encoder,
             gloss_output_layer=gloss_output_layer,
