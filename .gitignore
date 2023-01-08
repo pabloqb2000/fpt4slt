@@ -10,3 +10,4 @@ data/
 mytest.py
 load_data_ckeck.ipynb
 project/
+configs/prob2text/test*

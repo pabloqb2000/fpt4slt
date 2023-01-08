@@ -61,7 +61,7 @@ class ProbTranslationDataset(data.Dataset):
                         [
                             f"sign_prob_{i}",
                             "unk",
-                            Tensor(logits[0,:,:]).float(),
+                            Tensor(logits[i,:,:]).float(),
                             glosses[i].strip(),
                             texts[i].strip(),
                         ],
