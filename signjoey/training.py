@@ -100,6 +100,7 @@ class TrainManager:
 
         # validation & early stopping
         self.validation_freq = train_config.get("validation_freq", 100)
+        self.Validation_min_loss = traing_config.get("Validation_min_loss", 0)
         self.num_valid_log = train_config.get("num_valid_log", 5)
         self.ckpt_queue = queue.Queue(maxsize=train_config.get("keep_last_ckpts", 5))
         self.eval_metric = train_config.get("eval_metric", "bleu")
@@ -458,7 +459,8 @@ class TrainManager:
                     total_valid_duration = 0
 
                 # validate on the entire train and dev set
-                if self.steps % self.validation_freq == 0 and update:
+                if self.steps % self.validation_freq == 0 and update and 
+                        (self.Validation_min_loss <= 0 or recognition_loss + translation_loss <= self.validation_min_loss):
                     for eval_name, eval_data in (('train', train_data), ('valid', valid_data)):
                         valid_start_time = time.time()
                         # TODO (Cihan): There must be a better way of passing
