@@ -100,7 +100,7 @@ class TrainManager:
 
         # validation & early stopping
         self.validation_freq = train_config.get("validation_freq", 100)
-        self.Validation_min_loss = traing_config.get("Validation_min_loss", 0)
+        self.Validation_min_loss = train_config.get("Validation_min_loss", 0)
         self.num_valid_log = train_config.get("num_valid_log", 5)
         self.ckpt_queue = queue.Queue(maxsize=train_config.get("keep_last_ckpts", 5))
         self.eval_metric = train_config.get("eval_metric", "bleu")
