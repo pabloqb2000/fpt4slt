@@ -102,6 +102,7 @@ class TrainManager:
         self.validation_freq = train_config.get("validation_freq", 100)
         self.validation_min_loss = train_config.get("validation_min_loss", 0)
         self.validate_on_train = train_config.get("validate_on_train", True)
+        self.validate_data_len = train_config.get("validate_data_len", -1)
         self.num_valid_log = train_config.get("num_valid_log", 5)
         self.ckpt_queue = queue.Queue(maxsize=train_config.get("keep_last_ckpts", 5))
         self.eval_metric = train_config.get("eval_metric", "bleu")
@@ -462,7 +463,8 @@ class TrainManager:
                 # validate on the entire train and dev set
                 if self.steps % self.validation_freq == 0 and update and \
                         (self.validation_min_loss <= 0 or epoch_recognition_loss + epoch_translation_loss <= self.validation_min_loss):
-                    modes = (('train', train_data), ('valid', valid_data)) if self.validate_on_train else [('valid', valid_data)]
+                    reduced_train_data = torch.utils.data.Subset(train_data,  torch.randperm(len(train_dataset))[:self.validate_data_len])
+                    modes = (('train', reduced_train_data), ('valid', valid_data)) if self.validate_on_train else [('valid', valid_data)]
                     for eval_name, eval_data in modes:
                         valid_start_time = time.time()
                         # TODO (Cihan): There must be a better way of passing
