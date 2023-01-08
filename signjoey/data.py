@@ -160,6 +160,7 @@ def load_data(data_cfg: dict, data_type = "sign", keep_only = None) -> (Dataset,
         )
     else:
         train_data = ProbTranslationDataset(
+            data_cfg,
             path=train_paths,
             fields=(sequence_field, signer_field, sgn_field, gls_field, txt_field),
             filter_pred=lambda x: len(vars(x)["sgn"]) <= max_sent_length
@@ -212,6 +213,7 @@ def load_data(data_cfg: dict, data_type = "sign", keep_only = None) -> (Dataset,
         )
     else:
         dev_data = ProbTranslationDataset(
+            data_cfg,
             path=dev_paths,
             fields=(sequence_field, signer_field, sgn_field, gls_field, txt_field_pred),
             keep_only=keep_only['dev']
@@ -228,6 +230,7 @@ def load_data(data_cfg: dict, data_type = "sign", keep_only = None) -> (Dataset,
     # check if target exists
     if data_type == "sign":
         test_data = SignTranslationDataset(
+            data_cfg,
             path=test_paths,
             fields=(sequence_field, signer_field, sgn_field, gls_field, txt_field_pred),
             keep_only=keep_only['test']
