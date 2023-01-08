@@ -460,7 +460,7 @@ class TrainManager:
 
                 # validate on the entire train and dev set
                 if self.steps % self.validation_freq == 0 and update and \
-                        (self.Validation_min_loss <= 0 or recognition_loss + translation_loss <= self.validation_min_loss):
+                        (self.Validation_min_loss <= 0 or epoch_recognition_loss + epoch_translation_loss <= self.validation_min_loss):
                     for eval_name, eval_data in (('train', train_data), ('valid', valid_data)):
                         valid_start_time = time.time()
                         # TODO (Cihan): There must be a better way of passing
