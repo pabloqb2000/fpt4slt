@@ -74,6 +74,7 @@ training:
     logging_freq: 221
     validation_freq: 221
     validation_min_loss: 6000
+    validate_data_len: 500
     validate_on_train: true
     betas:
     - 0.9
