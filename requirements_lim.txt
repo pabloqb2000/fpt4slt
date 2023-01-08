@@ -1,4 +1,0 @@
-torch==1.4.0
-torchtext==0.5.0
-torchvision==0.5.0
-sacrebleu==1.4.4
