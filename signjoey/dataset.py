@@ -31,6 +31,7 @@ class ProbTranslationDataset(data.Dataset):
 
     def __init__(
         self,
+        cfg,
         path: str,
         fields: Tuple[RawField, RawField, Field, Field, Field],
         keep_only=None,
@@ -54,7 +55,7 @@ class ProbTranslationDataset(data.Dataset):
             annotations = load_json(annotation_file)
             glosses = annotations["glosses"]
             texts = annotations["translations"]
-            logits = np.load("./data/probs/" + annotations["sequence_logits"].split("/")[-1])
+            logits = np.load(cfg.get("data_path", "") + annotations["sequence_logits"].split("/")[-1])
             for i in range(len(glosses)):
                 examples.append(
                     data.Example.fromlist(
