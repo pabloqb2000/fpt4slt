@@ -71,8 +71,9 @@ training:
     translation_max_output_length: 30
     keep_last_ckpts: 1
     batch_multiplier: 1
-    logging_freq: 100
-    validation_freq: 100
+    logging_freq: 221
+    validation_freq: 221
+    Validation_min_loss: 2000
     betas:
     - 0.9
     - 0.998
