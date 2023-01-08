@@ -230,13 +230,13 @@ def load_data(data_cfg: dict, data_type = "sign", keep_only = None) -> (Dataset,
     # check if target exists
     if data_type == "sign":
         test_data = SignTranslationDataset(
-            data_cfg,
             path=test_paths,
             fields=(sequence_field, signer_field, sgn_field, gls_field, txt_field_pred),
             keep_only=keep_only['test']
         )
     else:
         test_data = ProbTranslationDataset(
+            data_cfg,
             path=test_paths,
             fields=(sequence_field, signer_field, sgn_field, gls_field, txt_field_pred),
             keep_only=keep_only['test']
