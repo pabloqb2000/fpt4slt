@@ -466,12 +466,12 @@ class TrainManager:
                     class RedDataset(toruch.utils.data.Dataset):
                         @staticmethod
                         def sort_key(ex):
-                            return data.interleave_keys(len(ex.sgn), len(ex.txt))
+                            return torch.utils.data.interleave_keys(len(ex.sgn), len(ex.txt))
                         def __init__(self, examples, fields):
                             self.examples = examples
                             self.fields = fields
                     idxs = torch.randperm(len(train_data))[:self.validate_data_len]
-                    reduced_train_data = torch.utils.data.Dataset([train_data.examples[i] for i in idxs], train_data.fields)
+                    reduced_train_data = torch.utils.data.RedDataset([train_data.examples[i] for i in idxs], train_data.fields)
                     
                     
                     modes = (('train', reduced_train_data), ('valid', valid_data)) if self.validate_on_train else [('valid', valid_data)]
