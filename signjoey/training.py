@@ -471,7 +471,7 @@ class TrainManager:
                             self.examples = examples
                             self.fields = fields
                     idxs = torch.randperm(len(train_data))[:self.validate_data_len]
-                    reduced_train_data = torch.utils.data.RedDataset([train_data.examples[i] for i in idxs], train_data.fields)
+                    reduced_train_data = RedDataset([train_data.examples[i] for i in idxs], train_data.fields)
                     
                     
                     modes = (('train', reduced_train_data), ('valid', valid_data)) if self.validate_on_train else [('valid', valid_data)]
