@@ -21,6 +21,14 @@ def load_dataset_file(filename):
 def load_json(filename):
     with open(filename, "r") as f:
         return json.load(f)
+    
+class ReducedDataset(data.Dataset):
+    @staticmethod
+    def sort_key(ex):
+        return data.interleave_keys(len(ex.sgn), len(ex.txt))
+    
+    def __init__(self, old_dataset, idxs):
+        super().__init__([old_dataset[idxs], old_dataset.fields)
 
 class ProbTranslationDataset(data.Dataset):
     """Defines a dataset for machine translation."""
