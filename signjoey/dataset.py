@@ -28,7 +28,7 @@ class ReducedDataset(data.Dataset):
         return data.interleave_keys(len(ex.sgn), len(ex.txt))
     
     def __init__(self, old_dataset, idxs):
-        super().__init__(old_dataset[idxs], old_dataset.fields)
+        super().__init__([old_dataset.examples[i] for i in idxs], old_dataset.fields)
 
 class ProbTranslationDataset(data.Dataset):
     """Defines a dataset for machine translation."""
