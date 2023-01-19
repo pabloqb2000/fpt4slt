@@ -27,6 +27,7 @@ from signjoey.model import SignModel
 from signjoey.prediction import validate_on_data
 from signjoey.loss import XentLoss
 from signjoey.data import load_data, make_data_iter
+from signjoey.dataset import ReducedDataset
 from signjoey.builders import build_optimizer, build_scheduler, build_gradient_clipper
 from signjoey.prediction import test
 from signjoey.metrics import wer_single
@@ -471,9 +472,7 @@ class TrainManager:
                             self.examples = examples
                             self.fields = fields
                     idxs = torch.randperm(len(train_data))[:self.validate_data_len]
-                    reduced_train_data = RedDataset([train_data.examples[i] for i in idxs], train_data.fields)
-                    
-                    
+                    reduced_train_data = ReducedDataset(train_data, idxs)
                     modes = (('train', reduced_train_data), ('valid', valid_data)) if self.validate_on_train else [('valid', valid_data)]
                     for eval_name, eval_data in modes:
                         valid_start_time = time.time()
