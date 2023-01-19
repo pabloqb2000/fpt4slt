@@ -564,6 +564,7 @@ class TrainManager:
                                 self.steps,
                             )
 
+                        new_best = False
                         if eval_name == 'valid':
                             if self.early_stopping_metric == "recognition_loss":
                                 assert self.do_recognition
@@ -577,7 +578,6 @@ class TrainManager:
                             else:
                                 ckpt_score = val_res["valid_scores"][self.eval_metric]
 
-                            new_best = False
                             if self.is_best(ckpt_score):
                                 self.best_ckpt_score = ckpt_score
                                 self.best_all_ckpt_scores = val_res["valid_scores"]
