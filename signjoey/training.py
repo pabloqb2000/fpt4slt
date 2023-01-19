@@ -603,77 +603,8 @@ class TrainManager:
                                     if self.last_best_lr != prev_lr:
                                         self.stop = True
 
-                            # append to validation report
-                            self._add_report(
-                                valid_scores=val_res["valid_scores"],
-                                valid_recognition_loss=val_res["valid_recognition_loss"]
-                                if self.do_recognition
-                                else None,
-                                valid_translation_loss=val_res["valid_translation_loss"]
-                                if self.do_translation
-                                else None,
-                                valid_ppl=val_res["valid_ppl"] if self.do_translation else None,
-                                eval_metric=self.eval_metric,
-                                new_best=new_best,
-                            )
                             valid_duration = time.time() - valid_start_time
                             total_valid_duration += valid_duration
-                            self.logger.info(
-                                "Validation result at epoch %3d, step %8d: duration: %.4fs\n\t"
-                                "Recognition Beam Size: %d\t"
-                                "Translation Beam Size: %d\t"
-                                "Translation Beam Alpha: %d\n\t"
-                                "Recognition Loss: %4.5f\t"
-                                "Translation Loss: %4.5f\t"
-                                "PPL: %4.5f\n\t"
-                                "Eval Metric: %s\n\t"
-                                "WER %3.2f\t(DEL: %3.2f,\tINS: %3.2f,\tSUB: %3.2f)\n\t"
-                                "BLEU-4 %.2f\t(BLEU-1: %.2f,\tBLEU-2: %.2f,\tBLEU-3: %.2f,\tBLEU-4: %.2f)\n\t"
-                                "CHRF %.2f\t"
-                                "ROUGE %.2f",
-                                epoch_no + 1,
-                                self.steps,
-                                valid_duration,
-                                self.eval_recognition_beam_size if self.do_recognition else -1,
-                                self.eval_translation_beam_size if self.do_translation else -1,
-                                self.eval_translation_beam_alpha if self.do_translation else -1,
-                                val_res["valid_recognition_loss"]
-                                if self.do_recognition
-                                else -1,
-                                val_res["valid_translation_loss"]
-                                if self.do_translation
-                                else -1,
-                                val_res["valid_ppl"] if self.do_translation else -1,
-                                self.eval_metric.upper(),
-                                # WER
-                                val_res["valid_scores"]["wer"] if self.do_recognition else -1,
-                                val_res["valid_scores"]["wer_scores"]["del_rate"]
-                                if self.do_recognition
-                                else -1,
-                                val_res["valid_scores"]["wer_scores"]["ins_rate"]
-                                if self.do_recognition
-                                else -1,
-                                val_res["valid_scores"]["wer_scores"]["sub_rate"]
-                                if self.do_recognition
-                                else -1,
-                                # BLEU
-                                val_res["valid_scores"]["bleu"] if self.do_translation else -1,
-                                val_res["valid_scores"]["bleu_scores"]["bleu1"]
-                                if self.do_translation
-                                else -1,
-                                val_res["valid_scores"]["bleu_scores"]["bleu2"]
-                                if self.do_translation
-                                else -1,
-                                val_res["valid_scores"]["bleu_scores"]["bleu3"]
-                                if self.do_translation
-                                else -1,
-                                val_res["valid_scores"]["bleu_scores"]["bleu4"]
-                                if self.do_translation
-                                else -1,
-                                # Other
-                                val_res["valid_scores"]["chrf"] if self.do_translation else -1,
-                                val_res["valid_scores"]["rouge"] if self.do_translation else -1,
-                            )
 
                             self._log_examples(
                                 sequences=[s for s in valid_data.sequence],
@@ -708,6 +639,78 @@ class TrainManager:
                                 self._store_outputs(
                                     "references.dev.txt", valid_seq, val_res["txt_ref"]
                                 )
+                            
+                        # append to validation report
+                        self._add_report(
+                            eval_name=eval_name,
+                            valid_scores=val_res["valid_scores"],
+                            valid_recognition_loss=val_res["valid_recognition_loss"]
+                            if self.do_recognition
+                            else None,
+                            valid_translation_loss=val_res["valid_translation_loss"]
+                            if self.do_translation
+                            else None,
+                            valid_ppl=val_res["valid_ppl"] if self.do_translation else None,
+                            eval_metric=self.eval_metric,
+                            new_best=new_best,
+                        )
+                        self.logger.info(
+                            "%s result at epoch %3d, step %8d: duration: %.4fs\n\t"
+                            "Recognition Beam Size: %d\t"
+                            "Translation Beam Size: %d\t"
+                            "Translation Beam Alpha: %d\n\t"
+                            "Recognition Loss: %4.5f\t"
+                            "Translation Loss: %4.5f\t"
+                            "PPL: %4.5f\n\t"
+                            "Eval Metric: %s\n\t"
+                            "WER %3.2f\t(DEL: %3.2f,\tINS: %3.2f,\tSUB: %3.2f)\n\t"
+                            "BLEU-4 %.2f\t(BLEU-1: %.2f,\tBLEU-2: %.2f,\tBLEU-3: %.2f,\tBLEU-4: %.2f)\n\t"
+                            "CHRF %.2f\t"
+                            "ROUGE %.2f",
+                            eval_name.capitalize(),
+                            epoch_no + 1,
+                            self.steps,
+                            valid_duration,
+                            self.eval_recognition_beam_size if self.do_recognition else -1,
+                            self.eval_translation_beam_size if self.do_translation else -1,
+                            self.eval_translation_beam_alpha if self.do_translation else -1,
+                            val_res["valid_recognition_loss"]
+                            if self.do_recognition
+                            else -1,
+                            val_res["valid_translation_loss"]
+                            if self.do_translation
+                            else -1,
+                            val_res["valid_ppl"] if self.do_translation else -1,
+                            self.eval_metric.upper(),
+                            # WER
+                            val_res["valid_scores"]["wer"] if self.do_recognition else -1,
+                            val_res["valid_scores"]["wer_scores"]["del_rate"]
+                            if self.do_recognition
+                            else -1,
+                            val_res["valid_scores"]["wer_scores"]["ins_rate"]
+                            if self.do_recognition
+                            else -1,
+                            val_res["valid_scores"]["wer_scores"]["sub_rate"]
+                            if self.do_recognition
+                            else -1,
+                            # BLEU
+                            val_res["valid_scores"]["bleu"] if self.do_translation else -1,
+                            val_res["valid_scores"]["bleu_scores"]["bleu1"]
+                            if self.do_translation
+                            else -1,
+                            val_res["valid_scores"]["bleu_scores"]["bleu2"]
+                            if self.do_translation
+                            else -1,
+                            val_res["valid_scores"]["bleu_scores"]["bleu3"]
+                            if self.do_translation
+                            else -1,
+                            val_res["valid_scores"]["bleu_scores"]["bleu4"]
+                            if self.do_translation
+                            else -1,
+                            # Other
+                            val_res["valid_scores"]["chrf"] if self.do_translation else -1,
+                            val_res["valid_scores"]["rouge"] if self.do_translation else -1,
+                        )
 
                         if self.stop:
                             break
@@ -823,6 +826,7 @@ class TrainManager:
 
     def _add_report(
             self,
+            eval_name: str,
             valid_scores: Dict,
             valid_recognition_loss: float,
             valid_translation_loss: float,
@@ -853,6 +857,7 @@ class TrainManager:
 
         with open(self.valid_report_file, "a", encoding="utf-8") as opened_file:
             opened_file.write(
+                "Eval Type: %s\t"
                 "Steps: {}\t"
                 "Recognition Loss: {:.5f}\t"
                 "Translation Loss: {:.5f}\t"
@@ -863,6 +868,7 @@ class TrainManager:
                 "CHRF {:.2f}\t"
                 "ROUGE {:.2f}\t"
                 "LR: {:.8f}\t{}\n".format(
+                    eval_name,
                     self.steps,
                     valid_recognition_loss if self.do_recognition else -1,
                     valid_translation_loss if self.do_translation else -1,
