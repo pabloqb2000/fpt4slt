@@ -463,7 +463,7 @@ class TrainManager:
                 # validate on the entire train and dev set
                 if self.steps % self.validation_freq == 0 and update and \
                         (self.validation_min_loss <= 0 or epoch_recognition_loss + epoch_translation_loss <= self.validation_min_loss):
-                    class RedDataset(toruch.utils.data.Dataset):
+                    class RedDataset(torch.utils.data.Dataset):
                         @staticmethod
                         def sort_key(ex):
                             return torch.utils.data.interleave_keys(len(ex.sgn), len(ex.txt))
