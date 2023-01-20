@@ -7,9 +7,9 @@ from signjoey.external_metrics import sacrebleu
 from signjoey.external_metrics import mscoco_rouge
 import numpy as np
 
-WER_COST_DEL = 3
-WER_COST_INS = 3
-WER_COST_SUB = 4
+WER_COST_DEL = 1
+WER_COST_INS = 1
+WER_COST_SUB = 1
 
 
 def chrf(references, hypotheses):

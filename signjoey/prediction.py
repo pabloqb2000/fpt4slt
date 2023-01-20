@@ -8,6 +8,7 @@ import numpy as np
 import pickle as pickle
 import time
 import torch.nn as nn
+from tqdm import tqdm
 
 from typing import List
 from torchtext.data import Dataset
@@ -122,7 +123,7 @@ def validate_on_data(
         total_num_txt_tokens = 0
         total_num_gls_tokens = 0
         total_num_seqs = 0
-        for valid_batch in iter(valid_iter):
+        for valid_batch in tqdm(iter(valid_iter)):
             batch = Batch(
                 is_train=False,
                 torch_batch=valid_batch,
