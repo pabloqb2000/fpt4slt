@@ -857,7 +857,7 @@ class TrainManager:
 
         with open(self.valid_report_file, "a", encoding="utf-8") as opened_file:
             opened_file.write(
-                "Eval Type: %s\t"
+                "Eval Type: {}\t"
                 "Steps: {}\t"
                 "Recognition Loss: {:.5f}\t"
                 "Translation Loss: {:.5f}\t"
