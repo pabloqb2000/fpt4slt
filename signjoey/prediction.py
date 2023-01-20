@@ -333,7 +333,7 @@ def test(
     )
 
     # load the data
-    _, dev_data, test_data, gls_vocab, txt_vocab = load_data(data_cfg=cfg["data"])
+    _, dev_data, test_data, gls_vocab, txt_vocab = load_data(data_cfg=cfg["data"], data_type="prob")
 
     # load model state from disk
     model_checkpoint = load_checkpoint(ckpt, use_cuda=use_cuda)
