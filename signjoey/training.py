@@ -565,6 +565,8 @@ class TrainManager:
                             )
 
                         new_best = False
+                        valid_duration = time.time() - valid_start_time
+                        total_valid_duration += valid_duration
                         if eval_name == 'valid':
                             if self.early_stopping_metric == "recognition_loss":
                                 assert self.do_recognition
@@ -603,8 +605,6 @@ class TrainManager:
                                     if self.last_best_lr != prev_lr:
                                         self.stop = True
 
-                            valid_duration = time.time() - valid_start_time
-                            total_valid_duration += valid_duration
 
                             self._log_examples(
                                 sequences=[s for s in valid_data.sequence],
