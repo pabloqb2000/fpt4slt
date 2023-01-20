@@ -606,21 +606,21 @@ class TrainManager:
                                         self.stop = True
 
 
-                            self._log_examples(
-                                sequences=[s for s in valid_data.sequence],
-                                gls_references=val_res["gls_ref"]
-                                if self.do_recognition
-                                else None,
-                                gls_hypotheses=val_res["gls_hyp"]
-                                if self.do_recognition
-                                else None,
-                                txt_references=val_res["txt_ref"]
-                                if self.do_translation
-                                else None,
-                                txt_hypotheses=val_res["txt_hyp"]
-                                if self.do_translation
-                                else None,
-                            )
+                            # self._log_examples(
+                            #     sequences=[s for s in valid_data.sequence],
+                            #     gls_references=val_res["gls_ref"]
+                            #     if self.do_recognition
+                            #     else None,
+                            #     gls_hypotheses=val_res["gls_hyp"]
+                            #     if self.do_recognition
+                            #     else None,
+                            #     txt_references=val_res["txt_ref"]
+                            #     if self.do_translation
+                            #     else None,
+                            #     txt_hypotheses=val_res["txt_hyp"]
+                            #     if self.do_translation
+                            #     else None,
+                            # )
 
                             valid_seq = [s for s in valid_data.sequence]
                             # store validation set outputs and references
