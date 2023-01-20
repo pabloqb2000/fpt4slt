@@ -205,6 +205,7 @@ class TransformerEncoder(Encoder):
                 for _ in range(num_layers)
             ]
         )
+        self.num_heads = num_heads
 
         print(f'Freezing transformer: {freeze_like_fpt}')
         if freeze_like_fpt:
@@ -263,7 +264,7 @@ class TransformerEncoder(Encoder):
         return "%s(num_layers=%r, num_heads=%r)" % (
             self.__class__.__name__,
             len(self.layers),
-            self.layers[0].src_src_att.num_heads,
+            self.num_heads,
         )
 
 
