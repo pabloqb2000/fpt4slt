@@ -9,7 +9,9 @@ paths = [path.join(base_dir, f) for f in files]
 
 def main():
     for config_path in paths:
+        print(f"NEW MODEL CONFIG: {config_path}\n\n")
         train(cfg_file=config_path, type="prob")
+        print("\n\n")
 
 if __name__ == "__main__":
     main()

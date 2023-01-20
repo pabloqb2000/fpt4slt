@@ -1064,7 +1064,7 @@ def train(cfg_file: str, type: str) -> None:
     output_path = os.path.join(trainer.model_dir, output_name)
     logger = trainer.logger
     del trainer
-    test(cfg_file, ckpt=ckpt, output_path=output_path, logger=logger)
+    # test(cfg_file, ckpt=ckpt, output_path=output_path, logger=logger)
 
 
 if __name__ == "__main__":
