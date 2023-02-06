@@ -159,5 +159,4 @@ class SignTranslationDataset(data.Dataset):
                     fields,
                 )
             )
-            print(sample["gloss"].strip(), sample["text"].strip())
         super().__init__(examples, fields, **kwargs)

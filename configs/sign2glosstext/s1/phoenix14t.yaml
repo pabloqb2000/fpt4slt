@@ -1,6 +1,6 @@
 name: phoenix14t
 data:
-    data_path: /project/slt/data/
+    data_path: data/signs/
     version: phoenix_2014_trans
     sgn: sign
     txt: text
@@ -50,7 +50,7 @@ training:
     reset_scheduler: false
     reset_optimizer: false
     random_seed: 1
-    model_dir: "/project/slt/logs/information_p14t_only/sign2glosstext/phoenix14t/1"
+    model_dir: "/project/slt/logs/sign2glosstext/1"
     recognition_loss_weight: 5.0
     translation_loss_weight: 1.0
     eval_metric: bleu
@@ -67,7 +67,7 @@ training:
     eval_translation_beam_alpha: -1
     overwrite: false
     shuffle: true
-    use_cuda: true
+    use_cuda: false
     translation_max_output_length: 30
     keep_last_ckpts: 1
     batch_multiplier: 1
