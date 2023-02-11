@@ -56,7 +56,8 @@ class TrainManager:
 
         # files for logging and storing
         self.model_dir = make_model_dir(
-            train_config["model_dir"], overwrite=train_config.get("overwrite", False)
+            train_config["model_dir"], config.get("name", "model"), 
+            overwrite=train_config.get("overwrite", False)
         )
         self.logger = make_logger(model_dir=self.model_dir)
         self.logging_freq = train_config.get("logging_freq", 100)

@@ -497,17 +497,18 @@ class TransformerDecoder(Decoder):
         self._output_size = vocab_size
 
         # create num_layers decoder layers and put them in a list
-        self.layers = nn.ModuleList(
-            [
-                TransformerDecoderLayer(
-                    size=hidden_size,
-                    ff_size=ff_size,
-                    num_heads=num_heads,
-                    dropout=dropout,
-                )
-                for _ in range(num_layers)
-            ]
-        )
+        if num_heads > 0:
+            self.layers = nn.ModuleList(
+                [
+                    TransformerDecoderLayer(
+                        size=hidden_size,
+                        ff_size=ff_size,
+                        num_heads=num_heads,
+                        dropout=dropout,
+                    )
+                    for _ in range(num_layers)
+                ]
+            )
 
         self.pe = PositionalEncoding(hidden_size)
         self.layer_norm = nn.LayerNorm(hidden_size, eps=1e-6)
@@ -549,9 +550,9 @@ class TransformerDecoder(Decoder):
         x = self.emb_dropout(x)
 
         trg_mask = trg_mask & subsequent_mask(trg_embed.size(1)).type_as(trg_mask)
-
-        for layer in self.layers:
-            x = layer(x=x, memory=encoder_output, src_mask=src_mask, trg_mask=trg_mask)
+        if self.layers:
+            for layer in self.layers:
+                x = layer(x=x, memory=encoder_output, src_mask=src_mask, trg_mask=trg_mask)
 
         x = self.layer_norm(x)
         output = self.output_layer(x)

@@ -194,33 +194,34 @@ class TransformerEncoder(Encoder):
         super(TransformerEncoder, self).__init__()
 
         # build all (num_layers) layers
-        self.layers = nn.ModuleList(
-            [
-                TransformerEncoderLayer(
-                    size=hidden_size,
-                    ff_size=ff_size,
-                    num_heads=num_heads,
-                    dropout=dropout,
-                )
-                for _ in range(num_layers)
-            ]
-        )
-        self.num_heads = num_heads
+        if num_layers > 0:
+            self.layers = nn.ModuleList(
+                [
+                    TransformerEncoderLayer(
+                        size=hidden_size,
+                        ff_size=ff_size,
+                        num_heads=num_heads,
+                        dropout=dropout,
+                    )
+                    for _ in range(num_layers)
+                ]
+            )
+            self.num_heads = num_heads
 
-        print(f'Freezing transformer: {freeze_like_fpt}')
-        if freeze_like_fpt:
-            # Freeze if needed. We only freeze the attention and intermediate layers.
-            print(f'Freezing type: {freeze_type}')
-            # Default behavior, also for freeze_type == 'layer_norm_only', is to freeze everything except layer norm
-            for name, p in self.layers.named_parameters():
-                name = name.lower()
-                if 'layer_norm' not in name:
-                    p.requires_grad = False
-            if freeze_type == 'finetune_ff':
+            print(f'Freezing transformer: {freeze_like_fpt}')
+            if freeze_like_fpt:
+                # Freeze if needed. We only freeze the attention and intermediate layers.
+                print(f'Freezing type: {freeze_type}')
+                # Default behavior, also for freeze_type == 'layer_norm_only', is to freeze everything except layer norm
                 for name, p in self.layers.named_parameters():
                     name = name.lower()
-                    if 'feed_forward' in name:
-                        p.requires_grad = True
+                    if 'layer_norm' not in name:
+                        p.requires_grad = False
+                if freeze_type == 'finetune_ff':
+                    for name, p in self.layers.named_parameters():
+                        name = name.lower()
+                        if 'feed_forward' in name:
+                            p.requires_grad = True
 
         self.layer_norm = nn.LayerNorm(hidden_size, eps=1e-6)
         self.pe = PositionalEncoding(hidden_size)
@@ -255,9 +256,9 @@ class TransformerEncoder(Encoder):
         """
         x = self.pe(embed_src)  # add position encoding to word embeddings
         x = self.emb_dropout(x)
-
-        for layer in self.layers:
-            x = layer(x, mask)
+        if self.layers:
+            for layer in self.layers:
+                x = layer(x, mask)
         return self.layer_norm(x), None
 
     def __repr__(self):
@@ -389,4 +390,79 @@ class BERTEncoder(Encoder):
             self.__class__.__name__,
             self.num_layers,
             self.encoder.config.num_attention_heads,
+        )
+
+
+class LinearEncoder(Encoder):
+    """
+    Linear Encoder
+    """
+
+    # pylint: disable=unused-argument
+    def __init__(
+            self,
+            input_size: int = 1024,
+            hidden_size: int = 1024,
+            output_size: int = 1024,
+            num_layers: int = 1,
+            dropout: float = 0.1,
+            freeze: bool = False,
+            **kwargs
+    ):
+        super(TransformerEncoder, self).__init__()
+
+        # build all (num_layers) layers
+        if num_layers > 0:
+            self.layers = nn.ModuleList(
+                [
+                    nn.Linear(
+                        input_size if i == 0 else hidden_size,
+                        output_size if i == num_layers - 1 else hidden_size
+                    )
+                    for i in range(num_layers)
+                ]
+            )
+
+        self.layer_norm = nn.LayerNorm(hidden_size, eps=1e-6)
+        self.dropout = nn.Dropout(p=dropout)
+
+        self._output_size = output_size
+
+        if freeze:
+            freeze_params(self)
+
+    # pylint: disable=arguments-differ
+    def forward(
+            self, embed_src: Tensor, src_length: Tensor, mask: Tensor
+    ) -> (Tensor, Tensor):
+        """
+        Pass the input (and mask) through each layer in turn.
+        Applies a Transformer encoder to sequence of embeddings x.
+        The input mini-batch x needs to be sorted by src length.
+        x and mask should have the same dimensions [batch, time, dim].
+
+        :param embed_src: embedded src inputs,
+            shape (batch_size, src_len, embed_size)
+        :param src_length: length of src inputs
+            (counting tokens before padding), shape (batch_size)
+        :param mask: indicates padding areas (zeros where padding), shape
+            (batch_size, src_len, embed_size)
+        :return:
+            - output: hidden states with
+                shape (batch_size, max_length, directions*hidden),
+            - hidden_concat: last hidden state with
+                shape (batch_size, directions*hidden)
+        """
+        if self.layers:
+            for layer in self.layers:
+                x = layer(x)
+                x = nn.Relu(x)
+                x = self.droput(x)
+        return self.layer_norm(x), None
+
+    def __repr__(self):
+        return "%s(num_layers=%r, num_heads=%r)" % (
+            self.__class__.__name__,
+            len(self.layers),
+            self.num_heads,
         )

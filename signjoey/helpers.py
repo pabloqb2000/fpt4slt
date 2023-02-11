@@ -24,11 +24,12 @@ from torchtext.data import Dataset
 from signjoey.vocabulary import GlossVocabulary, TextVocabulary
 
 
-def make_model_dir(model_dir: str, overwrite: bool = False) -> str:
+def make_model_dir(model_dir: str, model_name: str, overwrite: bool = False) -> str:
     """
     Create a new directory for the model.
 
     :param model_dir: path to model directory
+    :param model_name: name of the model
     :param overwrite: whether to overwrite an existing directory
     :return: path to model directory
     """
@@ -36,7 +37,8 @@ def make_model_dir(model_dir: str, overwrite: bool = False) -> str:
         if not overwrite:
             print('Will create new directory with current date')
             now = datetime.now()
-            model_dir = os.path.join(model_dir, now.strftime('%Y%m%d_%H%M%S'))
+            model_dir = os.path.join(model_dir, 
+                model_name + '_' + now.strftime('%Y%m%d_%H%M%S'))
             os.makedirs(model_dir)
         # delete previous directory to start with empty dir again
         shutil.rmtree(model_dir)
