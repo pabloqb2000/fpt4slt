@@ -421,7 +421,7 @@ def build_model(
                 emb_dropout=enc_emb_dropout,
             )
     else:
-        encoder = None
+        sgn_embed, encoder = None, None
 
     if do_recognition:
         gloss_output_layer = nn.Linear(encoder.output_size, len(gls_vocab))
