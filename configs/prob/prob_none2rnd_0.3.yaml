@@ -51,7 +51,7 @@ training:
     reset_optimizer: false
     random_seed: 19
     model_dir: /home/pqb/Desktop/rhome/pqb/tfg_data/model_logs/full_tests
-    recognition_loss_weight: 5.0
+    recognition_loss_weight: 0
     translation_loss_weight: 1.0
     eval_metric: bleu
     optimizer: adam
