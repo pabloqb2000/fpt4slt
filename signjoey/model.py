@@ -384,44 +384,44 @@ def build_model(
             input_size=sgn_dim,
         )
 
-    # build encoder
-    enc_dropout = cfg["encoder"].get("dropout", 0.0)
-    enc_emb_dropout = cfg["encoder"]["embeddings"].get("dropout", enc_dropout)
-    if cfg["encoder"].get("type", "recurrent") == "transformer":
-        assert (
-                cfg["encoder"]["embeddings"]["embedding_dim"]
-                == cfg["encoder"]["hidden_size"]
-        ), "for transformer, emb_size must be hidden_size"
+        # build encoder
+        enc_dropout = cfg["encoder"].get("dropout", 0.0)
+        enc_emb_dropout = cfg["encoder"]["embeddings"].get("dropout", enc_dropout)
+        if cfg["encoder"].get("type", "recurrent") == "transformer":
+            assert (
+                    cfg["encoder"]["embeddings"]["embedding_dim"]
+                    == cfg["encoder"]["hidden_size"]
+            ), "for transformer, emb_size must be hidden_size"
 
-        encoder = TransformerEncoder(
-            **cfg["encoder"],
-            emb_size=sgn_embed.embedding_dim,
-            emb_dropout=enc_emb_dropout,
-        )
-    elif cfg["encoder"].get("type", "recurrent") == "BERT":
-        assert (
-                cfg["encoder"]["embeddings"]["embedding_dim"]
-                == cfg["encoder"]["hidden_size"]
-        ), "for BERT, emb_size must be hidden_size"
+            encoder = TransformerEncoder(
+                **cfg["encoder"],
+                emb_size=sgn_embed.embedding_dim,
+                emb_dropout=enc_emb_dropout,
+            )
+        elif cfg["encoder"].get("type", "recurrent") == "BERT":
+            assert (
+                    cfg["encoder"]["embeddings"]["embedding_dim"]
+                    == cfg["encoder"]["hidden_size"]
+            ), "for BERT, emb_size must be hidden_size"
 
-        encoder = BERTEncoder(
-            **cfg["encoder"],
-            emb_size=sgn_embed.embedding_dim,
-            emb_dropout=enc_emb_dropout,
-        )
-    elif cfg["encoder"].get("type", "recurrent") == "ff":
-        encoder = nn.Linear(
-            sgn_embed.embedding_dim,
-            emb_dropout=enc_emb_dropout,
-        )
-    elif cfg["encoder"].get("type", "recurrent") == "none":
-        encoder = None
+            encoder = BERTEncoder(
+                **cfg["encoder"],
+                emb_size=sgn_embed.embedding_dim,
+                emb_dropout=enc_emb_dropout,
+            )
+        elif cfg["encoder"].get("type", "recurrent") == "ff":
+            encoder = nn.Linear(
+                sgn_embed.embedding_dim,
+                emb_dropout=enc_emb_dropout,
+            )
+        else:
+            encoder = RecurrentEncoder(
+                **cfg["encoder"],
+                emb_size=sgn_embed.embedding_dim,
+                emb_dropout=enc_emb_dropout,
+            )
     else:
-        encoder = RecurrentEncoder(
-            **cfg["encoder"],
-            emb_size=sgn_embed.embedding_dim,
-            emb_dropout=enc_emb_dropout,
-        )
+        encoder = None
 
     if do_recognition:
         gloss_output_layer = nn.Linear(encoder.output_size, len(gls_vocab))
