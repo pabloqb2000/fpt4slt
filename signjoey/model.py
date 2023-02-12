@@ -377,11 +377,12 @@ def build_model(
 
     txt_padding_idx = txt_vocab.stoi[PAD_TOKEN]
 
-    sgn_embed: SpatialEmbeddings = SpatialEmbeddings(
-        **cfg["encoder"]["embeddings"],
-        num_heads=cfg["encoder"]["num_heads"],
-        input_size=sgn_dim,
-    )
+    if cfg["encoder"].get("type", "recurrent") != "none":
+        sgn_embed: SpatialEmbeddings = SpatialEmbeddings(
+            **cfg["encoder"]["embeddings"],
+            num_heads=cfg["encoder"]["num_heads"],
+            input_size=sgn_dim,
+        )
 
     # build encoder
     enc_dropout = cfg["encoder"].get("dropout", 0.0)
