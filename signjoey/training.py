@@ -154,7 +154,8 @@ class TrainManager:
             config=train_config,
             scheduler_mode="min" if self.minimize_metric else "max",
             optimizer=self.optimizer,
-            hidden_size=config["model"]["encoder"]["hidden_size"],
+            hidden_size=config["model"]["encoder"]
+                .get("hidden_size", config["model"]["data"].get("feature_size", 0)),
         )
 
         # data & batch handling
