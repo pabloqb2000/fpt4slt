@@ -9,6 +9,7 @@ from transformers import BertConfig, BertModel
 from signjoey.helpers import freeze_params
 from signjoey.transformer_layers import TransformerEncoderLayer, PositionalEncoding, BERTIdentity
 
+from embeddings import get_activation
 
 # pylint: disable=abstract-method
 
@@ -404,6 +405,7 @@ class LinearEncoder(Encoder):
             input_size: int = 1024,
             hidden_size: int = 1024,
             output_size: int = 1024,
+            activation: str = "relu",
             num_layers: int = 1,
             dropout: float = 0.1,
             freeze: bool = False,
@@ -412,18 +414,18 @@ class LinearEncoder(Encoder):
         super(TransformerEncoder, self).__init__()
 
         # build all (num_layers) layers
-        if num_layers > 0:
-            self.layers = nn.ModuleList(
-                [
-                    nn.Linear(
-                        input_size if i == 0 else hidden_size,
-                        output_size if i == num_layers - 1 else hidden_size
-                    )
-                    for i in range(num_layers)
-                ]
-            )
-
-        self.layer_norm = nn.LayerNorm(hidden_size, eps=1e-6)
+        self.layers = nn.ModuleList(
+            [
+                nn.Linear(
+                    input_size if i == 0 else hidden_size,
+                    output_size if i == num_layers - 1 else hidden_size
+                )
+                for i in range(num_layers)
+            ]
+        )
+        self.activation = get_activation(activation)
+        self.hidden_layer_norm = nn.LayerNorm(hidden_size, eps=1e-6)
+        self.output_layer_norm = nn.LayerNorm(output_size, eps=1e-6)
         self.dropout = nn.Dropout(p=dropout)
 
         self._output_size = output_size
@@ -453,16 +455,14 @@ class LinearEncoder(Encoder):
             - hidden_concat: last hidden state with
                 shape (batch_size, directions*hidden)
         """
-        if self.layers:
-            for layer in self.layers:
-                x = layer(x)
-                x = nn.Relu(x)
-                x = self.droput(x)
+        for layer in self.layers:
+            x = layer(x)
+            x = self.activation(x)
+            x = self.droput(x)
         return self.layer_norm(x), None
 
     def __repr__(self):
-        return "%s(num_layers=%r, num_heads=%r)" % (
+        return "%s(num_layers=%r)" % (
             self.__class__.__name__,
-            len(self.layers),
-            self.num_heads,
+            len(self.layers)
         )
