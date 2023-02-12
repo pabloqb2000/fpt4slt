@@ -408,7 +408,8 @@ def build_model(
         )
     elif cfg["encoder"].get("type", "recurrent") == "ff":
         encoder = LinearEncoder(
-            **cfg["encoder"]
+            **cfg["encoder"],
+            input_size=sgn_embed.embedding_dim
         )
     else:
         encoder = RecurrentEncoder(

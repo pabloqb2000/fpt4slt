@@ -403,8 +403,8 @@ class LinearEncoder(Encoder):
     def __init__(
             self,
             input_size: int = 1024,
-            hidden_size: int = 1024,
-            output_size: int = 1024,
+            hidden_size: int = 512,
+            output_size: int = 512,
             activation: str = "relu",
             num_layers: int = 1,
             dropout: float = 0.1,
@@ -414,15 +414,16 @@ class LinearEncoder(Encoder):
         super(TransformerEncoder, self).__init__()
 
         # build all (num_layers) layers
-        self.layers = nn.ModuleList(
-            [
-                nn.Linear(
-                    input_size if i == 0 else hidden_size,
-                    output_size if i == num_layers - 1 else hidden_size
-                )
-                for i in range(num_layers)
-            ]
-        )
+        if num_layers > 0:
+            self.layers = nn.ModuleList(
+                [
+                    nn.Linear(
+                        input_size if i == 0 else hidden_size,
+                        output_size if i == num_layers - 1 else hidden_size
+                    )
+                    for i in range(num_layers)
+                ]
+            )
         self.activation = get_activation(activation)
         self.hidden_layer_norm = nn.LayerNorm(hidden_size, eps=1e-6)
         self.output_layer_norm = nn.LayerNorm(output_size, eps=1e-6)
@@ -455,10 +456,11 @@ class LinearEncoder(Encoder):
             - hidden_concat: last hidden state with
                 shape (batch_size, directions*hidden)
         """
-        for layer in self.layers:
-            x = layer(x)
-            x = self.activation(x)
-            x = self.droput(x)
+        if self.layers:
+            for layer in self.layers:
+                x = layer(x)
+                x = self.activation(x)
+                x = self.droput(x)
         return self.layer_norm(x), None
 
     def __repr__(self):
