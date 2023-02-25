@@ -206,7 +206,8 @@ class TransformerEncoder(Encoder):
                     for _ in range(num_layers)
                 ]
             )
-            self.num_heads = num_heads
+            
+self.num_heads = num_heads
 
             print(f'Freezing transformer: {freeze_like_fpt}')
             if freeze_like_fpt:
@@ -456,16 +457,15 @@ class LinearEncoder(Encoder):
             - hidden_concat: last hidden state with
                 shape (batch_size, directions*hidden)
         """
-        x = embed_src
-        if self.num_layers > 0:
+        if self.layers:
             for layer in self.layers:
                 x = layer(x)
                 x = self.activation(x)
                 x = self.droput(x)
-        return self.output_layer_norm(x), None
+        return self.layer_norm(x), None
 
     def __repr__(self):
         return "%s(num_layers=%r)" % (
             self.__class__.__name__,
-            self.num_layers
+            len(self.num_layers)
         )
